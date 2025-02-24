@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Music Industry Portal</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; background: #f8f8f8; }
+        .tabs { display: flex; justify-content: center; gap: 10px; margin: 20px 0; flex-wrap: wrap; }
+        .tab { padding: 10px 20px; background: #007BFF; color: white; cursor: pointer; border-radius: 5px; }
+        .tab.active { background: #0056b3; }
+        .container { display: none; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; padding: 20px; }
+        .container.active { display: grid; }
+        .site-box { background: #fff; padding: 15px; border-radius: 10px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); }
+        .iframe-container { width: 100%; height: 250px; border: none; }
+        .visit-btn { display: block; margin-top: 10px; padding: 10px; background: #007BFF; color: white; text-decoration: none; border-radius: 5px; }
+        .visit-btn:hover { background: #0056b3; }
+        .add-btn { margin: 10px; padding: 10px; background: #28a745; color: white; border: none; cursor: pointer; border-radius: 5px; }
+        .remove-btn { margin: 10px; padding: 10px; background: #dc3545; color: white; border: none; cursor: pointer; border-radius: 5px; }
+        .remove-btn:hover { background: #c82333; }
+        .edit-btn { margin: 5px; padding: 5px 10px; background: #ffc107; color: white; border: none; cursor: pointer; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <h1>Music Industry Portal</h1>
+    <div class="tabs" id="tabs"></div>
+    <button class="add-btn" onclick="addNewTab()">+ Add New Tab</button>
+    <div id="tab-contents"></div>
+
+    <script>
+        let tabsData = {
+            "News": [
+                { name: "Music Business Worldwide", url: "https://www.musicbusinessworldwide.com/category/news/" },
+                { name: "BPI News Analysis", url: "https://www.bpi.co.uk/news-analysis" },
+                { name: "Beggars", url: "https://beggars.com" },
+                { name: "IFPI News", url: "https://www.ifpi.org/news/" },
+                { name: "Complete Music Update", url: "https://completemusicupdate.com" },
+                { name: "Universal Music", url: "https://www.universalmusic.com/#" }
+            ],
+            "Data & Reports": [
+                { name: "IFPI Resources", url: "https://www.ifpi.org/resources/" },
+                { name: "Music Week Charts", url: "https://www.musicweek.com/charts" }
+            ],
+            "Careers": [
+                { name: "UK Music Careers Pack", url: "https://www.ukmusic.org/wp-content/uploads/2021/05/UK_Music_Careers_Information_Pack_2020.pdf" },
+                { name: "Music Jobs", url: "https://www.musicweek.com/jobs" }
+            ],
+            "Podcasts": [
+                { name: "Music Business Worldwide Podcast", url: "https://www.musicbusinessworldwide.com/podcast/" }
+            ]
+        };
+
+        function setupTabs() {
+            const tabsContainer = document.getElementById("tabs");
+            const contentsContainer = document.getElementById("tab-contents");
+            tabsContainer.innerHTML = "";
+            contentsContainer.innerHTML = "";
+            
+            Object.keys(tabsData).forEach((tabName, index) => {
+                const tab = document.createElement("div");
+                tab.classList.add("tab");
+                if (index === 0) tab.classList.add("active");
+                tab.innerText = tabName;
+                tab.onclick = () => switchTab(tabName);
+
+                const removeTabBtn = document.createElement("button");
+                removeTabBtn.classList.add("remove-btn");
+                removeTabBtn.innerText = "Remove Tab";
+                removeTabBtn.onclick = () => removeTab(tabName);
+                tab.appendChild(removeTabBtn);
+
+                tabsContainer.appendChild(tab);
+
+                const container = document.createElement("div");
+                container.classList.add("container");
+                if (index === 0) container.classList.add("active");
+                container.id = `tab-${tabName.replace(/\s/g, "-")}`;
+                
+                tabsData[tabName].forEach((site, siteIndex) => {
+                    const siteBox = document.createElement("div");
+                    siteBox.classList.add("site-box");
+                    const isIframeable = isIframeSupported(site.url);
+                    if (isIframeable) {
+                        siteBox.innerHTML = `
+                            <iframe class="iframe-container" src="${site.url}"></iframe>
+                            <a class="visit-btn" href="${site.url}" target="_blank">Visit</a>
+                        `;
+                    } else {
+                        siteBox.innerHTML = `
+                            <p>
+                                <span>${site.name}</span> 
+                                <button class="edit-btn" onclick="editWebsiteName('${tabName}', ${siteIndex})">Edit Name</button>
+                            </p>
+                            <a class="visit-btn" href="${site.url}" target="_blank">Visit</a>
+                        `;
+                    }
+
+                    const removeWebsiteBtn = document.createElement("button");
+                    removeWebsiteBtn.classList.add("remove-btn");
+                    removeWebsiteBtn.innerText = "Remove Website";
+                    removeWebsiteBtn.onclick = () => removeWebsite(tabName, siteIndex);
+                    siteBox.appendChild(removeWebsiteBtn);
+
+                    container.appendChild(siteBox);
+                });
+
+                const addSiteBtn = document.createElement("button");
+                addSiteBtn.classList.add("add-btn");
+                addSiteBtn.innerText = "+ Add Website";
+                addSiteBtn.onclick = () => addWebsite(tabName);
+                container.appendChild(addSiteBtn);
+
+                contentsContainer.appendChild(container);
+            });
+        }
+
+        function switchTab(tabName) {
+            document.querySelectorAll(".tab").forEach(tab => {
+                tab.classList.toggle("active", tab.innerText === tabName);
+            });
+            document.querySelectorAll(".container").forEach(container => {
+                container.classList.toggle("active", container.id === `tab-${tabName.replace(/\s/g, "-")}`);
+            });
+        }
+
+        function addNewTab() {
+            const tabName = prompt("Enter new tab name:");
+            if (tabName && !tabsData[tabName]) {
+                tabsData[tabName] = [];
+                setupTabs();
+            }
+        }
+
+        function addWebsite(tabName) {
+            const siteURL = prompt("Enter website URL:");
+            const siteName = prompt("Enter website name:");
+            if (siteURL && siteName) {
+                tabsData[tabName].push({ name: siteName, url: siteURL });
+                setupTabs();
+            }
+        }
+
+        function removeTab(tabName) {
+            if (confirm(`Are you sure you want to remove the "${tabName}" tab?`)) {
+                delete tabsData[tabName];
+                setupTabs();
+            }
+        }
+
+        function removeWebsite(tabName, siteIndex) {
+            if (confirm(`Are you sure you want to remove this website from the "${tabName}" tab?`)) {
+                tabsData[tabName].splice(siteIndex, 1);
+                setupTabs();
+            }
+        }
+
+        function editWebsiteName(tabName, siteIndex) {
+            const newName = prompt("Enter new website name:");
+            if (newName) {
+                tabsData[tabName][siteIndex].name = newName;
+                setupTabs();
+            }
+        }
+
+        function isIframeSupported(url) {
+            const nonIframeableDomains = ['pdf', 'docs.google', 'wikipedia', 'twitter', 'facebook'];
+            return !nonIframeableDomains.some(domain => url.includes(domain));
+        }
+
+        setupTabs();
+    </script>
+</body>
+</html>
